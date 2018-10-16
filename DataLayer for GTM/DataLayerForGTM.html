@@ -1,10 +1,36 @@
-//If you have a product_grid_item.liquid or a snippet where the product is loaded for collections to use I would add it there. Or after the {% for product in products %} in collection.liquid or anywhere you use that line.
-<!-- Products for DataLayer Push -->
-<!-- Assign the id the way you have it on your products feed -->
-{% capture add_product %}{{ product.id }}_{{ product.product.selected_or_first_available_variant.id }},{% endcapture %}
-{% assign products_collection = products_collection | append: add_product %}
-<!-- END Products for DataLayer Push: {{ products_collection }} -->
+<!-- Put this code just after the body open tag -->
+<!-- Google DataLayer Array Start -->
+<script type="text/javascript">
+  // initialize array
+  var product_array = [];
+</script>
+<!-- Google DataLayer Array End -->
 
+<!-- If you have a product_grid_item.liquid or a snippet where the product is loaded for collections to use I would add it there. Or after the {% for product in products %} in collection.liquid or anywhere you use that line. -->
+<!-- Google DataLayer Array Start -->
+<script type="text/javascript">
+  // append new value to the array
+  product_array.push("{{ product.id }}_{{ product.selected_or_first_available_variant.id }}");
+</script>
+<!-- Google DataLayer Array End -->
+
+<!-- If you have a sectioned theme the code above wont work.. use t -->
+
+
+<!-- This code I would put before the </body> tag -->
+<!-- I use the next code to get if the person is on desktop, mobile or tablet. -->
+<script type="text/javascript" src="//wurfl.io/wurfl.js"></script>
+<script type="text/javascript">
+  console.log(WURFL);
+  var siteType = "d";
+  if(WURFL.form_factor == "Tablet"){
+    siteType = "t";
+  } else if (WURFL.is_mobile) {
+    siteType = "m";
+  } else {
+    siteType = "d";
+  }
+</script> 
 
 <!-- This code I would put before the </body> tag -->
 <script type="text/javascript">
@@ -12,28 +38,12 @@ window.dataLayer = window.dataLayer || [];
 dataLayer.push({
   {% if template contains 'index' %}
     "pageType": "home",
-    //productsID is used in index supposing you have the code above used in the "for" where the products are printed
-    {% assign products_collection_array = products_collection | split: ',' %}
-    "productsId": [
-    {% for product_collection in products_collection_array %}
-      {% if product_collection != "" %}
-      "{{ product_collection }}",
-      {% endif %}
-    {% endfor %}
-     ],
+    "productsId": product_array,
   {% elsif template contains 'collection' %}
     "pageType": "collection",
     "categoryId": "{{ collection.id }}",
     "categoryTitle": "{{ collection.title }}",
-    //productsID is used in collection supposing you have the code above used in the "for" where the products are printed
-    {% assign products_collection_array = products_collection | split: ',' %}
-    "productsId": [
-    {% for product_collection in products_collection_array %}
-      {% if product_collection != "" %}
-      "{{ product_collection }}",
-      {% endif %}
-    {% endfor %}
-    ],
+    "productsId": product_array,
   {% elsif template contains 'product' %}
     "pageType": "product",
     //This productID would depend on how your feed works
@@ -42,7 +52,7 @@ dataLayer.push({
     "productBrand": "{{ product.vendor }}",
     "productUrl": "{{ product.url }}",
     "productImage": "{{ product.featured_image }}",
-    {% if product.selected_or_first_available_variant.compare_at_price %}	
+    {% if product.selected_or_first_available_variant.compare_at_price %} 
     "productPrice": "{{ product.selected_or_first_available_variant.compare_at_price }}",
     "productSpecialPrice": "{{ product.selected_or_first_available_variant.price }}",
     {% else %}
@@ -61,7 +71,7 @@ dataLayer.push({
         "pageType": "search",
         //If you use Shopify's own search system you can add the code with the next code else you will have tu use JS to get the products showed in the search.
         "productsId": [
-          {% for item in search.results limit:3 %} 
+          {% for item in search.results limit:6 %} 
             "{{item.product.id}}_{{item.selected_or_first_available_variant.id}}",
           {% endfor %}
         ],
@@ -75,8 +85,7 @@ dataLayer.push({
   "customerId": "{{ customer.email }}",
   {% endif %}
   "sessionId": getCookie("__ssid"),
-  "store": "Your Store Name",
-  //If you have a better way to detect if the person is on m for mobile, d for desktop or t for tablet.
+  "store": "{{ shop.name }}",
   "device": siteType,
   {% if cart.item_count > 0 %}
   "cartData": [
@@ -95,7 +104,6 @@ dataLayer.push({
   "cartSubTotal": {{ cart.total_price | times: 0.01 }},
   {% endif %}
 });
-
 //To get the cookies value by name
 function getCookie(name) {
   var value = "; " + document.cookie;
@@ -103,18 +111,3 @@ function getCookie(name) {
   if (parts.length == 2) return parts.pop().split(";").shift();
 }
 </script>
-
-<!-- I use the next code to get if the person is on desktop, mobile or tablet. -->
-<script type="text/javascript" src="//img.metaffiliation.com/u/20/p52787.js"></script>
-<script type="text/javascript" src="//wurfl.io/wurfl.js"></script>
-<script type="text/javascript">
-  console.log(WURFL);
-  var siteType = "d";
-  if(WURFL.form_factor == "Tablet"){
-    siteType = "t";
-  } else if (WURFL.is_mobile) {
-    siteType = "m";
-  } else {
-    siteType = "d";
-  }
-</script> 
